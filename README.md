@@ -27,15 +27,16 @@ vercel
 
 After deployment, your webhook URL will be:
 ```
-https://your-project-name.vercel.app/api/webhook
+https://your-project-name.vercel.app/webhook
 ```
 
 ## Endpoints
 
-- `POST /api/webhook` - Main webhook endpoint (requires Basic Auth)
-- `GET /api/data` - View all received data
-- `GET /api/latest` - View latest POST
-- `GET /api/test` - Test endpoint
+- `POST /webhook` - Main webhook endpoint (requires Basic Auth)
+- `GET /data` - View all received data
+- `GET /latest` - View latest POST
+- `GET /test` - Test endpoint
+- `GET /` - Service status
 
 ## Authentication
 
@@ -44,7 +45,7 @@ Basic Authentication with credentials from environment variables.
 ## Dayforce Configuration
 
 Use in Dayforce:
-- **API URL**: `https://your-project-name.vercel.app/api/webhook`
+- **API URL**: `https://your-project-name.vercel.app/webhook`
 - **Authentication Type**: Basic Authentication
 - **Username**: `dayforce`
 - **Password**: `envalior2025`
