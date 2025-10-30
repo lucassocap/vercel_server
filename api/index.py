@@ -129,6 +129,9 @@ def test():
         'data': request.get_json() if request.is_json else None
     })
 
+# Vercel WSGI handler - this is what Vercel will call
+handler = app
+
 # For local testing
 if __name__ == '__main__':
     print("="*60)
