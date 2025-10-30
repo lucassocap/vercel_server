@@ -13,8 +13,8 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Vercel server URL
-BASE_URL = "https://vercel-server-lyart-theta.vercel.app/api"
-WEBHOOK_URL = "https://vercel-server-lyart-theta.vercel.app/api/webhook"
+BASE_URL = "https://vercel-server-lyart-theta.vercel.app"
+WEBHOOK_URL = "https://vercel-server-lyart-theta.vercel.app/webhook"
 
 # Credentials
 USERNAME = "dayforce"
@@ -123,8 +123,8 @@ def test_get_latest():
     print_separator("Testing Latest Data Endpoint")
     
     try:
-        response = requests.get("https://vercel-server-lyart-theta.vercel.app/api/latest", verify=False, timeout=10)
-        print("URL: https://vercel-server-lyart-theta.vercel.app/api/latest")
+        response = requests.get("https://vercel-server-lyart-theta.vercel.app/latest", verify=False, timeout=10)
+        print("URL: https://vercel-server-lyart-theta.vercel.app/latest")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
@@ -147,8 +147,8 @@ def test_get_all_data():
     print_separator("Testing All Data Endpoint")
     
     try:
-        response = requests.get("https://vercel-server-lyart-theta.vercel.app/api/data", verify=False, timeout=10)
-        print("URL: https://vercel-server-lyart-theta.vercel.app/api/data")
+        response = requests.get("https://vercel-server-lyart-theta.vercel.app/data", verify=False, timeout=10)
+        print("URL: https://vercel-server-lyart-theta.vercel.app/data")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
@@ -169,8 +169,8 @@ def test_endpoint():
     print_separator("Testing Test Endpoint")
     
     try:
-        response = requests.get("https://vercel-server-lyart-theta.vercel.app/api/test", verify=False, timeout=10)
-        print("URL: https://vercel-server-lyart-theta.vercel.app/api/test")
+        response = requests.get("https://vercel-server-lyart-theta.vercel.app/test", verify=False, timeout=10)
+        print("URL: https://vercel-server-lyart-theta.vercel.app/test")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
