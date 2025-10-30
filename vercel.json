@@ -1,0 +1,27 @@
+{{{
+
+  "builds": [
+
+    {  "rewrites": [  "builds": [
+
+      "src": "main.py",
+
+      "use": "@vercel/python"    { "source": "/(.*)", "destination": "/api/index" }    {
+
+    }
+
+  ],  ]      "src": "api/index.py",
+
+  "routes": [
+
+    {}      "use": "@vercel/python"
+
+      "src": "/(.*)",
+
+      "dest": "main.py"    }
+
+    }  ]
+
+  ]}
+
+}
