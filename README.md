@@ -4,7 +4,7 @@ Flask serverless function to receive webhook POSTs from Dayforce.
 
 **Configuration**: Uses explicit `vercel.json` to ensure Python runtime detection and proper routing.
 
-**Latest Update**: Fixed vercel.json JSON syntax error - now ready for deployment.
+**Latest Update**: Fixed vercel.json JSON syntax error - now ready for deployment. Build timestamp: 2025-10-30 18:15
 
 ## Quick Deploy to Vercel
 
