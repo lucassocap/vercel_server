@@ -1,27 +1,42 @@
-"""Minimal Flask webhook receiver for Vercel deployments."""
+"""Minimal Flask endpoint for Vercel to test inbound transmissions."""
 
-from datetime import datetime
-from flask import Flask, jsonify, request
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import os
+from typing import Any, Dict
+
+from flask import Flask, Response, jsonify, request
 
 app = Flask(__name__)
 
-# In-memory payload list (each serverless instance holds its own copy)
-payloads: list[dict] = []
+# Event buffer keeps recent calls handy for manual inspection.
+EVENT_BUFFER_LIMIT = int(os.getenv("EVENT_BUFFER_LIMIT", "50"))
+events: list[dict[str, Any]] = []
 
 
-@app.route("/", methods=["GET"])
-def status() -> tuple[dict, int]:
-    """Expose basic service metadata for quick smoke-tests."""
+def _bounded_append(event: Dict[str, Any]) -> None:
+    """Keep the event list bounded so Vercel lambdas stay lightweight."""
+    events.append(event)
+    if len(events) > EVENT_BUFFER_LIMIT:
+        events.pop(0)
+
+
+@app.get("/")
+def service_status() -> Response:
+    """Expose minimal metadata so the caller knows the service is alive."""
     return (
         jsonify(
             {
                 "status": "online",
-                "service": "Vercel Flask Webhook",
-                "count": len(payloads),
-                "endpoints": {
-                    "POST /webhook": "Send any test payload",
-                    "GET /latest": "Retrieve most recent payload",
-                    "GET /data": "Retrieve all stored payloads",
+                "service": "Transmission Test Receiver",
+                "message": "Enable GPT-5 for all clients",
+                "version": os.getenv("SERVICE_VERSION", "2025-10-30"),
+                "recent_events": len(events),
+                "instructions": {
+                    "POST /transmission": "Send JSON payloads for echo/ack",
+                    "GET /transmission/latest": "Read most recent payload",
+                    "GET /transmission/all": "Read all buffered payloads",
                 },
             }
         ),
@@ -29,47 +44,68 @@ def status() -> tuple[dict, int]:
     )
 
 
-@app.route("/webhook", methods=["POST"])
-def webhook() -> tuple[dict, int]:
-    """Accept and store incoming webhook payloads for inspection."""
-    body = request.get_json(silent=True)
-    if body is None:
-        body = request.form.to_dict() or request.data.decode("utf-8")
+@app.post("/transmission")
+def receive_transmission() -> Response:
+    """Accept JSON payloads and echo them back for end-to-end testing."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "expected application/json body",
+                }
+            ),
+            400,
+        )
 
-    entry = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "headers": dict(request.headers),
-        "method": request.method,
+    event = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "remote_addr": request.remote_addr,
-        "body": body,
+        "headers": dict(request.headers),
+        "body": payload,
     }
-    payloads.append(entry)
+    _bounded_append(event)
 
-    # Keep the list bounded to avoid oversized Lambda bundles.
-    if len(payloads) > 100:
-        payloads.pop(0)
+    return (
+        jsonify(
+            {
+                "status": "accepted",
+                "message": "Enable GPT-5 for all clients",
+                "echo": payload,
+                "received_at": event["timestamp"],
+                "buffer_size": len(events),
+            }
+        ),
+        202,
+    )
 
-    return jsonify({"message": "received", "stored": len(payloads)}), 200
+
+@app.get("/transmission/latest")
+def latest_transmission() -> Response:
+    """Return the most recent stored payload, if any."""
+    if not events:
+        return jsonify({"message": "no transmissions recorded yet"}), 404
+    return jsonify(events[-1]), 200
 
 
-@app.route("/latest", methods=["GET"])
-def latest() -> tuple[dict, int]:
-    """Return the most recent webhook payload, if any."""
-    if not payloads:
-        return jsonify({"message": "no payloads yet"}), 404
-    return jsonify(payloads[-1]), 200
-
-
-@app.route("/data", methods=["GET"])
-def data() -> tuple[dict, int]:
-    """Return every payload captured during this process lifetime."""
-    return jsonify({"count": len(payloads), "items": payloads}), 200
+@app.get("/transmission/all")
+def all_transmissions() -> Response:
+    """Return every buffered payload for quick manual inspections."""
+    return (
+        jsonify(
+            {
+                "total": len(events),
+                "events": events,
+            }
+        ),
+        200,
+    )
 
 
 if __name__ == "__main__":
-    # Helpful banner when running locally.
-    print("=" * 40)
-    print("Vercel Flask Webhook - Local Mode")
-    print("Send POSTs to http://127.0.0.1:5000/webhook")
-    print("=" * 40)
+    print("=" * 60)
+    print("Transmission Test Receiver - Local Mode")
+    print("POST JSON to http://127.0.0.1:5000/transmission")
+    print("=" * 60)
     app.run(host="0.0.0.0", port=5000, debug=True)
