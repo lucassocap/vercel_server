@@ -41,7 +41,6 @@ def requires_auth(f):
     return decorated
 
 @app.route('/')
-@app.route('/api')
 def index():
     """Main page"""
     return jsonify({
@@ -49,10 +48,10 @@ def index():
         'service': 'Dayforce Webhook Receiver',
         'version': '1.0.0',
         'endpoints': {
-            'webhook': '/api/webhook (POST - requires Basic Auth)',
-            'data': '/api/data (GET)',
-            'latest': '/api/latest (GET)',
-            'test': '/api/test (GET/POST)'
+            'webhook': '/webhook (POST - requires Basic Auth)',
+            'data': '/data (GET)',
+            'latest': '/latest (GET)',
+            'test': '/test (GET/POST)'
         },
         'authentication': {
             'type': 'Basic Auth',
@@ -60,7 +59,7 @@ def index():
         }
     })
 
-@app.route('/api/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 @requires_auth
 def webhook():
     """Main webhook endpoint to receive POST data"""
@@ -102,7 +101,7 @@ def webhook():
         'received_data': data
     }), 200
 
-@app.route('/api/data', methods=['GET'])
+@app.route('/data', methods=['GET'])
 def get_all_data():
     """View all received POST data"""
     return jsonify({
@@ -110,7 +109,7 @@ def get_all_data():
         'data': received_data
     })
 
-@app.route('/api/latest', methods=['GET'])
+@app.route('/latest', methods=['GET'])
 def get_latest():
     """View latest POST data"""
     if received_data:
@@ -118,7 +117,7 @@ def get_latest():
     else:
         return jsonify({'message': 'No data received yet'}), 404
 
-@app.route('/api/test', methods=['GET', 'POST'])
+@app.route('/test', methods=['GET', 'POST'])
 def test():
     """Test endpoint"""
     return jsonify({

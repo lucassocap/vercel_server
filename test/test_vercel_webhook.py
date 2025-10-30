@@ -13,8 +13,8 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Vercel server URL
-BASE_URL = "https://vercel-server-lyart-theta.vercel.app"
-WEBHOOK_URL = f"{BASE_URL}/api/webhook"
+BASE_URL = "https://vercel-server-lyart-theta.vercel.app/api/webhook"
+WEBHOOK_URL = "https://vercel-server-lyart-theta.vercel.app/api/webhook/webhook"
 
 # Credentials
 USERNAME = "dayforce"
@@ -119,12 +119,12 @@ def test_webhook_with_auth():
         return False
 
 def test_get_latest():
-    """Test the /api/latest endpoint to verify data was stored"""
+    """Test the /latest endpoint to verify data was stored"""
     print_separator("Testing Latest Data Endpoint")
     
     try:
-        response = requests.get(f"{BASE_URL}/api/latest", verify=False, timeout=10)
-        print(f"URL: {BASE_URL}/api/latest")
+        response = requests.get(f"https://vercel-server-lyart-theta.vercel.app/api/webhook/latest", verify=False, timeout=10)
+        print(f"URL: https://vercel-server-lyart-theta.vercel.app/api/webhook/latest")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
@@ -143,12 +143,12 @@ def test_get_latest():
         return False
 
 def test_get_all_data():
-    """Test the /api/data endpoint to view all stored data"""
+    """Test the /data endpoint to view all stored data"""
     print_separator("Testing All Data Endpoint")
     
     try:
-        response = requests.get(f"{BASE_URL}/api/data", verify=False, timeout=10)
-        print(f"URL: {BASE_URL}/api/data")
+        response = requests.get(f"https://vercel-server-lyart-theta.vercel.app/api/webhook/data", verify=False, timeout=10)
+        print(f"URL: https://vercel-server-lyart-theta.vercel.app/api/webhook/data")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
@@ -165,12 +165,12 @@ def test_get_all_data():
         return False
 
 def test_endpoint():
-    """Test the /api/test endpoint"""
+    """Test the /test endpoint"""
     print_separator("Testing Test Endpoint")
     
     try:
-        response = requests.get(f"{BASE_URL}/api/test", verify=False, timeout=10)
-        print(f"URL: {BASE_URL}/api/test")
+        response = requests.get(f"https://vercel-server-lyart-theta.vercel.app/api/webhook/test", verify=False, timeout=10)
+        print(f"URL: https://vercel-server-lyart-theta.vercel.app/api/webhook/test")
         print(f"Status Code: {response.status_code}")
         
         if response.status_code == 200:
