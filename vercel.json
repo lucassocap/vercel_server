@@ -1,41 +1,14 @@
-{{{{
-
+﻿{
   "builds": [
-
-    {  "builds": [
-
+    {
       "src": "main.py",
-
-      "use": "@vercel/python"    {  "rewrites": [  "builds": [
-
+      "use": "@vercel/python"
     }
-
-  ],      "src": "main.py",
-
+  ],
   "routes": [
-
-    {      "use": "@vercel/python"    { "source": "/(.*)", "destination": "/api/index" }    {
-
+    {
       "src": "/(.*)",
-
-      "dest": "main.py"    }
-
+      "dest": "main.py"
     }
-
-  ]  ],  ]      "src": "api/index.py",
-
-}
-
-  "routes": [
-
-    {}      "use": "@vercel/python"
-
-      "src": "/(.*)",
-
-      "dest": "main.py"    }
-
-    }  ]
-
-  ]}
-
+  ]
 }
