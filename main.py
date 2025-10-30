@@ -1,140 +1,75 @@
-"""
-Webhook endpoint for Vercel serverless function
-Receives POST requests from Dayforce and stores data
-"""
+"""Minimal Flask webhook receiver for Vercel deployments."""
 
-from flask import Flask, request, jsonify, make_response
-from functools import wraps
 from datetime import datetime
-import json
-import os
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Get credentials from environment variables
-USERNAME = os.getenv('WEBHOOK_USERNAME', 'dayforce')
-PASSWORD = os.getenv('WEBHOOK_PASSWORD', 'envalior2025')
+# In-memory payload list (each serverless instance holds its own copy)
+payloads: list[dict] = []
 
-# In-memory storage (Vercel serverless - data persists per instance)
-received_data = []
 
-def check_auth(username, password):
-    """Check if a username/password combination is valid."""
-    return username == USERNAME and password == PASSWORD
-
-def authenticate():
-    """Sends a 401 response that enables basic auth"""
-    return make_response(
-        jsonify({'error': 'Authentication required'}), 
-        401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+@app.route("/", methods=["GET"])
+def status() -> tuple[dict, int]:
+    """Expose basic service metadata for quick smoke-tests."""
+    return (
+        jsonify(
+            {
+                "status": "online",
+                "service": "Vercel Flask Webhook",
+                "count": len(payloads),
+                "endpoints": {
+                    "POST /webhook": "Send any test payload",
+                    "GET /latest": "Retrieve most recent payload",
+                    "GET /data": "Retrieve all stored payloads",
+                },
+            }
+        ),
+        200,
     )
 
-def requires_auth(f):
-    """Decorator to require basic authentication"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
 
-@app.route('/')
-def index():
-    """Main page"""
-    return jsonify({
-        'status': 'online',
-        'service': 'Dayforce Webhook Receiver',
-        'version': '1.0.0',
-        'endpoints': {
-            'webhook': '/webhook (POST - requires Basic Auth)',
-            'data': '/data (GET)',
-            'latest': '/latest (GET)',
-            'test': '/test (GET/POST)'
-        },
-        'authentication': {
-            'type': 'Basic Auth',
-            'username': USERNAME
-        }
-    })
+@app.route("/webhook", methods=["POST"])
+def webhook() -> tuple[dict, int]:
+    """Accept and store incoming webhook payloads for inspection."""
+    body = request.get_json(silent=True)
+    if body is None:
+        body = request.form.to_dict() or request.data.decode("utf-8")
 
-@app.route('/webhook', methods=['POST'])
-@requires_auth
-def webhook():
-    """Main webhook endpoint to receive POST data"""
-    
-    # Get timestamp
-    timestamp = datetime.now().isoformat()
-    
-    # Get POST data
-    if request.is_json:
-        data = request.get_json()
-    else:
-        data = request.form.to_dict() or request.data.decode('utf-8')
-    
-    # Store data
     entry = {
-        'timestamp': timestamp,
-        'headers': dict(request.headers),
-        'data': data,
-        'method': request.method,
-        'url': request.url,
-        'remote_addr': request.remote_addr
+        "timestamp": datetime.utcnow().isoformat(),
+        "headers": dict(request.headers),
+        "method": request.method,
+        "remote_addr": request.remote_addr,
+        "body": body,
     }
-    
-    received_data.append(entry)
-    
-    # Keep only last 100 entries
-    if len(received_data) > 100:
-        received_data.pop(0)
-    
-    # Log to Vercel
-    print(f"[{timestamp}] Webhook received from {request.remote_addr}")
-    print(f"Data: {json.dumps(data, indent=2)}")
-    
-    # Send response
-    return jsonify({
-        'status': 'success',
-        'message': 'Data received successfully',
-        'timestamp': timestamp,
-        'received_data': data
-    }), 200
+    payloads.append(entry)
 
-@app.route('/data', methods=['GET'])
-def get_all_data():
-    """View all received POST data"""
-    return jsonify({
-        'total_requests': len(received_data),
-        'data': received_data
-    })
+    # Keep the list bounded to avoid oversized Lambda bundles.
+    if len(payloads) > 100:
+        payloads.pop(0)
 
-@app.route('/latest', methods=['GET'])
-def get_latest():
-    """View latest POST data"""
-    if received_data:
-        return jsonify(received_data[-1])
-    else:
-        return jsonify({'message': 'No data received yet'}), 404
+    return jsonify({"message": "received", "stored": len(payloads)}), 200
 
-@app.route('/test', methods=['GET', 'POST'])
-def test():
-    """Test endpoint"""
-    return jsonify({
-        'status': 'ok',
-        'message': 'Test endpoint working',
-        'method': request.method,
-        'timestamp': datetime.now().isoformat(),
-        'authenticated': request.authorization is not None,
-        'data': request.get_json() if request.is_json else None
-    })
 
-# For local testing
-if __name__ == '__main__':
-    print("="*60)
-    print("Webhook Server Starting (Local Mode)")
-    print("="*60)
-    print(f"Username: {USERNAME}")
-    print(f"Password: {PASSWORD}")
-    print("="*60)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+@app.route("/latest", methods=["GET"])
+def latest() -> tuple[dict, int]:
+    """Return the most recent webhook payload, if any."""
+    if not payloads:
+        return jsonify({"message": "no payloads yet"}), 404
+    return jsonify(payloads[-1]), 200
+
+
+@app.route("/data", methods=["GET"])
+def data() -> tuple[dict, int]:
+    """Return every payload captured during this process lifetime."""
+    return jsonify({"count": len(payloads), "items": payloads}), 200
+
+
+if __name__ == "__main__":
+    # Helpful banner when running locally.
+    print("=" * 40)
+    print("Vercel Flask Webhook - Local Mode")
+    print("Send POSTs to http://127.0.0.1:5000/webhook")
+    print("=" * 40)
+    app.run(host="0.0.0.0", port=5000, debug=True)
