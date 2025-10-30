@@ -130,6 +130,12 @@ def test():
         'data': request.get_json() if request.is_json else None
     })
 
+# Vercel serverless handler
+# This is required for Vercel to properly route requests to the Flask app
+def handler(request, response):
+    """Vercel serverless function handler"""
+    return app(request, response)
+
 # For local testing
 if __name__ == '__main__':
     print("="*60)
