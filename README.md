@@ -1,53 +1,66 @@
-# Vercel Transmission Test Endpoint
+# Dayforce Webhook Receiver — Vercel
 
-Serverless Flask function that accepts JSON payloads so you can verify end-to-end transmissions with Vercel quickly.
+Secure Flask serverless function to receive POSTs from Dayforce and inspect payloads during migrations.
 
-**Latest Update**: Rebuilt from scratch for lightweight testing. Timestamp: 2025-10-30 21:45 UTC.
+**Configuration**: `vercel.json` pins the Python builder and routes every request to `main.py`.
 
-## Deploy to Vercel
+**Latest Update**: Basic Auth restored (2025-10-31 09:00). Local scripts and Vercel deployments now behave identically.
 
-1. Install the CLI (one-time):
-```bash
-npm install -g vercel
-```
+## Quick Deploy to Vercel
 
-2. Authenticate:
-```bash
-vercel login
-```
+1. **Install Vercel CLI**
+	```bash
+	npm install -g vercel
+	```
 
-3. Deploy from `tools/vercel_server`:
-```bash
-vercel
-```
+2. **Login to Vercel**
+	```bash
+	vercel login
+	```
 
-That's it—no environment variables required for basic testing.
+3. **Initial Deploy (run inside `tools/vercel_server`)**
+	```bash
+	vercel
+	```
+
+4. **Set Environment Variables** (Dashboard → Settings → Environment Variables)
+	- `WEBHOOK_USERNAME` = `dayforce`
+	- `WEBHOOK_PASSWORD` = `envalior2025`
+	- *(Optional)* `PYTHON_VERSION` = `3.11`
+
+5. **Redeploy after saving env vars**
+	```bash
+	vercel deploy --prod
+	```
+
+6. **Inspect Deployment Logs (if something fails)**
+	```bash
+	vercel logs <deployment-url>
+	```
 
 ## Endpoints
 
-- `GET /` – Health/status banner plus quick instructions.
-- `POST /transmission` – Send JSON to receive an echo response.
-- `GET /transmission/latest` – Inspect the most recent call buffered in memory.
-- `GET /transmission/all` – Inspect every buffered call (defaults to 50 items).
-
-**Important**: Because Vercel serverless functions are ephemeral, the in-memory buffer only persists for the life of a single instance. Treat it as a short-lived debug view.
+- `POST /webhook` – Primary webhook endpoint (requires Basic Auth)
+- `GET /data` – Lists every payload captured by the current instance
+- `GET /latest` – Returns the most recent payload
+- `GET /test` – Lightweight health check
+- `GET /` – Service metadata
 
 ## Local Smoke Test
 
-From the same directory:
 ```bash
+cd tools/vercel_server
 python main.py
+# in another shell
+python ..\test_webhook_auto.py
 ```
 
-Then POST a payload:
-```bash
-curl -X POST http://127.0.0.1:5000/transmission \
-   -H "Content-Type: application/json" \
-   -d '{"client":"sandbox","action":"ping"}'
-```
+The automated test validates both the authenticated and unauthenticated flows.
 
-## Redeploy Flow
+## Dayforce Configuration
 
-1. Commit changes (optional but recommended).
-2. Run `vercel --prod` to push to production.
-3. Validate with `curl` or your integration to confirm the response includes the message “Enable GPT-5 for all clients.”
+- **API URL**: `https://<your-project-name>.vercel.app/webhook`
+- **Authentication Type**: Basic Authentication
+- **Username**: `dayforce`
+- **Password**: `envalior2025`
+- **Headers**: `Content-Type: application/json`
